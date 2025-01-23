@@ -36,6 +36,8 @@ function App() {
   const [loadingFraudData, setLoadingFraudData] = useState<boolean>(true);
   const [position, setPosition] = useState<number>(40); // For color meter demo
   const [extractedData, setExtractedData] = useState<Entity[]>([]); // Initialize with an empty array
+  const [extractedText, setExtractedText] = useState<Entity[]>([]); // Initialize with an empty array
+
   const { loading, table } = useTable();
 
   const fetchInsights = useCallback(() => {
@@ -72,14 +74,13 @@ function App() {
   const fetchExtractedData = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:3000/api/extracted-data');
-      console.log('Fetched data:', response.data); // Log the fetched data
-      if (response.data && Array.isArray(response.data.extractedData)) {
+      if (response.data) {
         setExtractedData(response.data.extractedData);
-        console.log("Updated extractedData state:", response.data.extractedData);
-      
+        setExtractedText(response.data.extractedText);
+        console.log('Fetched data:', response.data);
       } else {
-        console.error("Unexpected response structure:", response.data);
-      } 
+        console.error("No data received");
+      }
     }
     catch (error) {
       console.error("Error fetching extracted data:", error);
@@ -193,31 +194,72 @@ function App() {
                 <TabsContent
                   value="OCR"
                   style={{ height: "calc(100% - 1rem)" }}
+                  className=""
                 >
+                  <div
+                    style={{ height: "calc(100% - 1rem)" }}
+                    className="h-full overflow-auto px-4 pb-3"
+                  >
+                    <Input
+                      placeholder="Search Fault Text..."
+                      className="mb-4"
+                    />
+
                   <div className="space-y-4">
-                    {/* {extractedText.map((text, index) => (
-                      <Card className="p-4">
-                        <CardDescription>{text}</CardDescription>
+                    {extractedText && extractedText.length > 0 ? (
+                      extractedText.map((item, index) => (
+                      <Card key={index} className="p-4">
+                        <CardDescription className="whitespace-pre-line text-center">
+                          {item.text}
+                        </CardDescription>
                       </Card>
-                     ))} 
-                     {loadingInsights && (
+                      ))
+                    ) : ( 
+                      <p>No data available</p>
+                    )}
+                  </div>
+                    
+                      {loadingFraudData && (
+                        <div className="space-y-2">
+                          {[1, 2, 3].map((i) => (
+                            <Skeleton key={i} className="h-14 w-full" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                  </div>
+                  </TabsContent>
+               
+                  {/* Working */}
+
+                  {/* <div className="space-y-4">
+                    {extractedText && extractedText.length > 0 ? (
+                      extractedText.map((item, index) => (
+                        <Card key={index} className="p-4">
+                          <CardDescription>{item.text}</CardDescription>
+                        </Card>
+                      ))
+                    ) : ( 
+                      <p>No data available</p>
+                    )}
+                    {loadingInsights && (
                       <div className="space-y-4">
                         {[1,2,3].map((i) => (
                           <Skeleton key={i} className="h-14 w-full" />
                         ))}
                       </div>
-                    ) : ( */}
-                      <p>No data available</p>
-                    {/* )}  */}
-                  </div>
-                </TabsContent>
+                    )}
+                  </div> */}
+                {/* </TabsContent> */}
 
-                <TabsContent
+                {/* <TabsContent
                   value="Extracted"
                   style={{ height: "calc(100% - 1rem)" }}
                 >
                   
-                </TabsContent>
+                </TabsContent> */}
               </Tabs>
             </div>
           </ResizablePanel>
@@ -293,13 +335,13 @@ function App() {
                 </span>
               </div>
             </h1>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-yellow-800">
-              <strong>Forgery Likelihood: {position/100} (Moderate)</strong> - The document seems authentic but raises some suspicion due to OCR issues and missing standard features.
-            </p>
-          </div>
             <div className="flex justify-center mt-4 p-4 gap-4">
               <ColorMeterForAValue position={position} />
+            </div>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-10">
+              <p className="text-yellow-800">
+                <strong>Forgery Likelihood: {position/100} (Moderate)</strong> - The document seems authentic but raises some suspicion due to OCR issues and missing standard features.
+              </p>
             </div>
           </div>
         </div>
@@ -314,7 +356,7 @@ function ColorMeterForAValue({ position = 0 }: { position: number }) {
   const safePosition = Math.min(position, 100);
   return (
     <>
-      <div className="relative w-72 ">
+      <div className="relative w-80 ">
         <div className="flex rounded-full overflow-hidden w-full h-8 text-center">
           <div className="bg-green-500 w-1/5"></div>
           <div className="bg-yellow-300 w-1/5"></div>
@@ -335,11 +377,9 @@ function ColorMeterForAValue({ position = 0 }: { position: number }) {
             }`,
           }}
         >
-                   <div className='mb-4 pb-4'>{position}%
-                    <div className="w-0 h-0 border-l-8 border-r-8 border-b-[16px] border-l-transparent border-r-transparent border-b-black"></div>
-                   </div>
-
-          
+        <div className='mb-4 pb-4'>{position}%
+          <div className="w-0 h-0 border-l-8 border-r-8 border-b-[16px] border-l-transparent border-r-transparent border-b-black"></div>
+        </div>
         </div>
       </div>
     </>
