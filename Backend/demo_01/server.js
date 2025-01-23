@@ -1,15 +1,23 @@
-// const express = require('express');
-// const multer = require('multer');
-// const cors = require('cors');
-// const path = require('path');
-// const fs = require('fs').promises;
-// const { DocumentProcessorServiceClient } = require('@google-cloud/documentai').v1;
+// import express from 'express';
+// import multer from 'multer';
+// import cors from 'cors';
+// import path from 'path';
+// import { promises as fs } from 'fs';
+// import { DocumentProcessorServiceClient } from '@google-cloud/documentai/build/src/v1/index.js';
+// import OpenAI from 'openai';
+// import dotenv from 'dotenv';
+// import { fileURLToPath } from 'url';
+
+// dotenv.config();
 
 // // Configuration details
 // const projectId = 'dotted-lens-407303';
-// const location = 'us'; // Format is 'us' or 'eu'
+// const location = 'us';
 // const processorId = '6681e05b97d129d4';
-// const imageDirectory = path.join(__dirname, 'uploaded_image'); // Correct relative path
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// const imageDirectory = path.join(__dirname, 'uploaded_image');
+// let extractedData = [];
 
 // // Instantiates a client
 // const client = new DocumentProcessorServiceClient();
@@ -17,32 +25,27 @@
 // const app = express();
 // const PORT = 3000;
 
-// app.use(cors({
-//   // origin: ['http://localhost:3000', 'http://localhost:5173'], // Allow both backend and frontend origins
-//   // methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
-//   // credentials: true, // Allow cookies if needed
-// }));
-
-// let extractedData = [];
+// app.use(cors());
 
 // // Set up storage engine
 // const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     fs.mkdir(imageDirectory, { recursive: true }).then(() => {
+//   destination: async (req, file, cb) => {
+//     try {
+//       await fs.mkdir(imageDirectory, { recursive: true });
 //       cb(null, imageDirectory);
-//     }).catch(err => {
+//     } catch (err) {
 //       console.error('Error creating directory:', err);
 //       cb(err, imageDirectory);
-//     });
+//     }
 //   },
 //   filename: (req, file, cb) => {
 //     cb(null, file.originalname);
-//   }
+//   },
 // });
 
-// const upload = multer({ storage: storage });
+// const upload = multer({ storage });
 
-// // Serve the HTML file (if needed)
+// // Serve the HTML file
 // app.get('/up', (req, res) => {
 //   res.sendFile(path.join(__dirname, 'index.html'));
 // });
@@ -53,49 +56,56 @@
 //     return res.status(400).send('No file uploaded.');
 //   }
 //   res.send('File uploaded successfully');
-//   await quickstart(); // Process the latest image after upload
+//   await quickstart(req.file.mimetype); // Pass MIME type dynamically
 // });
 
-// // To get latest json data extracted from image
+// // API to get extracted data
 // app.get('/api/extracted-data', (req, res) => {
-//   if (!extractedData || extractedData.length === 0) {
-//     return res.status(204).send({ message: 'No data available' });
-//   }
-//   res.json({ entities: extractedData });
+//   res.json({
+//     status: 'success',
+//     extractedData,
+//     lastUpdated: new Date(),
+//   });
 // });
 
+// app.get('/api/analysis-result', async (req, res) => {
+//   try {
+//     const analysisResult = await analyzeExtractedData(extractedData);
+//     res.json({
+//       status: 'success',
+//       analysisResult,
+//       lastUpdated: new Date(),
+//     });
+//   } catch (error) {
+//     console.error('Error fetching analysis result:', error.message || error);
+//     res.status(500).json({ status: 'error', message: 'Failed to fetch analysis result' });
+//   }
+// });
 
-// async function quickstart() {
+// async function quickstart(mimeType) {
 //   try {
 //     const name = `projects/${projectId}/locations/${location}/processors/${processorId}`;
-
-//     // Find the latest image file in the directory
 //     const latestImagePath = await getLatestImagePath(imageDirectory);
+
 //     if (!latestImagePath) {
 //       console.error('No image files found in the directory.');
 //       return;
 //     }
 
-//     // Read the file into memory
 //     const imageFile = await fs.readFile(latestImagePath);
-
-//     // Convert the image data to a Buffer and base64 encode it
 //     const encodedImage = Buffer.from(imageFile).toString('base64');
 
-//     // Define the request payload
 //     const request = {
 //       name,
 //       rawDocument: {
 //         content: encodedImage,
-//         mimeType: 'image/png', // Ensure this matches the file type
+//         mimeType,
 //       },
 //     };
 
 //     console.log('Sending document for processing...');
-//     // Send the document for processing
 //     const [result] = await client.processDocument(request);
 
-//     // Debug full processor response
 //     console.log('Full Processor Response:', JSON.stringify(result, null, 2));
 
 //     if (!result || !result.document) {
@@ -104,29 +114,14 @@
 //     }
 
 //     const { document } = result;
-
-//     // Extract identity information with confidence scores
 //     extractedData = extractIdentityInfo(document).entities;
 
-//     // Log the structured output
-//     console.log('Extracted Identity Information:', JSON.stringify(identityInfo, null, 2));
-//     //console.log(document.text);
-
-//     // Check for entities with zero confidence
-//     const zeroConfidenceEntities = identityInfo.entities.filter(
-//       (entity) => entity.confidence === 0
-//     );
-//     if (zeroConfidenceEntities.length > 0) {
-//       console.warn(
-//         `Entities with zero confidence: ${JSON.stringify(zeroConfidenceEntities, null, 2)}`
-//       );
-//     }
+//     console.log('Extracted Identity Information:', JSON.stringify(extractedData, null, 2));
 //   } catch (error) {
 //     console.error('Error processing document:', error.message || error);
 //   }
 // }
 
-// // Function to get the path of the latest image file in the directory
 // async function getLatestImagePath(directory) {
 //   try {
 //     const files = await fs.readdir(directory);
@@ -141,7 +136,9 @@
 //     );
 
 //     const latestFile = imageFiles.reduce((latest, file, index) => {
-//       return fileStats[index].mtimeMs > latest.mtimeMs ? { file, mtimeMs: fileStats[index].mtimeMs } : latest;
+//       return fileStats[index].mtimeMs > latest.mtimeMs
+//         ? { file, mtimeMs: fileStats[index].mtimeMs }
+//         : latest;
 //     }, { file: null, mtimeMs: 0 });
 
 //     return path.join(directory, latestFile.file);
@@ -151,10 +148,10 @@
 //   }
 // }
 
-// // Extract identity information from the Document object
 // function extractIdentityInfo(document) {
 //   const identityInfo = {
-//     entities: [],
+//     role: "user",
+//     content: `You are an AI document fraud analysis expert. Your task is to analyze input data related to identity documents and detect potential forgery or manipulation. Evaluate the document’s authenticity based on the provided structured data, identify suspicious elements, and provide a detailed report. Your output should include the following sections: 1. Authenticity Indicators, 2. Potential Fraud Indicators, 3. Suspicious Elements, 4. Suggestions for Verification, 5. Forgery Likelihood Score (0.0 to 1.0) with an interpretation.\n\nInput Data:\n${JSON.stringify(document, null, 2)}`
 //   };
 
 //   if (!document.entities || document.entities.length === 0) {
@@ -162,30 +159,66 @@
 //     return identityInfo;
 //   }
 
-//   document.entities.forEach((entity) => {
+//   document.entities.forEach(entity => {
 //     const entityInfo = {
 //       type: entity.type,
-//       text: '',
-//       confidence: entity.confidence || 0, // Default to 0 if confidence is missing
-//       normalizedValue: entity.normalizedValue ? entity.normalizedValue.text : 'UNKNOWN',
+//       text: entity.textAnchor?.textSegments?.map(seg => seg.text || '').join(' ').trim() || '',
+//       confidence: entity.confidence || 0,
+//       normalizedValue: entity.normalizedValue?.text || 'UNKNOWN',
 //     };
 
-//     if (entity.textAnchor && entity.textAnchor.textSegments) {
-//       entityInfo.text = entity.textAnchor.textSegments
-//         .map((segment) => segment.text || '')
-//         .join(' ')
-//         .trim();
-//     }
-
-//     // Log entity extraction for debugging
 //     console.log('Extracted Entity:', JSON.stringify(entityInfo, null, 2));
-
-    
 //     identityInfo.entities.push(entityInfo);
 //   });
-//   console.log(document.text);
 
 //   return identityInfo;
+// }
+
+// async function analyzeExtractedData(data) {
+//   try {
+//     const openai = new OpenAI({
+//       apiKey: "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",
+//       baseURL: 'https://integrate.api.nvidia.com/v1',
+//     });
+
+//     const completion = await openai.chat.completions.create({
+//       model: "meta/llama-3.1-405b-instruct",
+//       messages: [
+//         {
+//           role: data.role,
+//           content: `You are an AI document fraud analysis expert. Your task is to analyze input data related to identity documents and detect potential forgery or manipulation. Evaluate the document’s authenticity based on the provided structured data, identify suspicious elements, and provide a detailed report. Your output should include the following sections: 1. Authenticity Indicators, 2. Potential Fraud Indicators, 3. Suspicious Elements, 4. Suggestions for Verification (mention further steps they can take; don't explicitly tell any sentence where our platform seems at lower-end), 5. Forgery Likelihood Score (0.0 to 1.0) with an interpretation.` + data.content,
+//         },
+//       ],
+//       temperature: 0.2,
+//       top_p: 0.7,
+//       max_tokens: 1024,
+//       stream: true
+//     });
+
+//     let analysisResult = '';
+//     for await (const chunk of completion) {
+//       analysisResult += chunk.choices[0]?.delta?.content || '';
+//     }
+
+//     console.log('Final analysis result:', analysisResult);
+//     return analysisResult;
+//   } catch (error) {
+//     if (error.response) {
+//       // The request was made and the server responded with a status code
+//       // that falls out of the range of 2xx
+//       console.error('Error response:', error.response.status);
+//       console.error('Error response data:', error.response.data);
+//       console.error('Error response headers:', error.response.headers);
+//     } else if (error.request) {
+//       // The request was made but no response was received
+//       console.error('Error request:', error.request);
+//     } else {
+//       // Something happened in setting up the request that triggered an Error
+//       console.error('Error message:', error.message);
+//     }
+//     console.error('Error config:', error.config);
+//     return null;
+//   }
 // }
 
 // app.listen(PORT, () => {
@@ -203,14 +236,12 @@
 
 
 
-
-
-
-
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 const path = require('path');
+const OpenAI = require('openai');
+const { time } = require('console');
 const fs = require('fs').promises;
 const { DocumentProcessorServiceClient } = require('@google-cloud/documentai').v1;
 
@@ -269,6 +300,14 @@ app.get('/api/extracted-data', (req, res) => {
     lastUpdated: new Date(),
   });
 });
+
+app.get('/api/analysis-result', async (req, res) => {
+  res.json({
+    status: 'success',
+    analysisResult,
+    lastUpdated: new Date(),
+  })
+})
 
 async function quickstart(mimeType) {
   try {
@@ -358,6 +397,42 @@ function extractIdentityInfo(document) {
 
   return identityInfo;
 }
+
+
+// async function analysisForData(data) {
+//   const openai = new OpenAI({
+//     apiKey: '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',
+//     baseURL: 'https://integrate.api.nvidia.com/v1',
+//   })
+  
+//   const completion = await openai.chat.completion.create({
+//     model: "meta/llama-3.1-405b-instruct",
+//     messages: [
+//       {
+//         role: data.role,
+//         content: `You are an AI document fraud analysis expert. Your task is to analyze input data related to identity documents and detect potential forgery or manipulation. Evaluate the document’s authenticity based on the provided structured data, identify suspicious elements, and provide a detailed report. Your output should include the following sections: 1. Authenticity Indicators, 2. Potential Fraud Indicators, 3. Suspicious Elements, 4. Suggestions for Verification (mention further steps they can take; don't explicitly tell any sentence where our platform seems at lower-end), 5. Forgery Likelihood Score (0.0 to 1.0) with an interpretation.` + data.content,
+//       },
+//     ],
+//     temperature: 0.2,
+//     top_p: 0.7,
+//     max_tokens: 1024,
+//     stream: true
+//   });
+// }
+
+
+//   let analysisResult = '';
+//   for await (const chunk of completion) {
+//     if (chunk.choices && chunk.choices[0] && chunk.choices[0].delta) {
+//       analysisResult += chunk.choices[0].delta.content || '';
+//       //console.log('Chunk received:', chunk.choices[0].delta.content); // Log the received chunk
+//     }
+//   }
+
+//   //console.log('Final analysis result:', analysisResult); // Log the final analysis result
+//   return analysisResult;
+
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

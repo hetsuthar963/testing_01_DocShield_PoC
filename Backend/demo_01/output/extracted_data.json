@@ -1,0 +1,26 @@
+[
+  {
+    "type": "fraud_signals_is_identity_document",
+    "text": "",
+    "confidence": 0,
+    "normalizedValue": "NOT_AN_ID"
+  },
+  {
+    "type": "fraud_signals_suspicious_words",
+    "text": "",
+    "confidence": 0,
+    "normalizedValue": "PASS"
+  },
+  {
+    "type": "fraud_signals_image_manipulation",
+    "text": "",
+    "confidence": 0,
+    "normalizedValue": "PASS"
+  },
+  {
+    "type": "fraud_signals_online_duplicate",
+    "text": "",
+    "confidence": 0,
+    "normalizedValue": "PASS"
+  }
+]
