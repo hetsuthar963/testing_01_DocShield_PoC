@@ -186,25 +186,7 @@ function App() {
                     </div>
 
                     <div className="space-y-4">
-                    {/* {extractedData.length > 0 ? (
-                      extractedData.map((entity, index) => (
-                      <Card key={index} className="p-4">
-                        <CardDescription>
-                          <strong>Type:</strong> {entity.type}<br />
-                          <strong>Text:</strong> {entity.text}<br />
-                          <strong>Confidence:</strong> {entity.confidence}<br />
-                          <strong>Normalized Value:</strong> {entity.normalizedValue}
-                        </CardDescription>
-                      </Card>
-                      ))
-                    ) : (
-                      <p>No data available</p>
-                    )} */}
-
                   </div>
-
-                  {/* <Tabledata /> */}
-
                   </div>
                 </TabsContent>
 
@@ -340,9 +322,10 @@ function ColorMeterForAValue({ position = 0 }: { position: number }) {
           <div className="bg-orange-400 w-1/5"></div>
           <div className="bg-red-500 w-1/5"></div>
         </div>
+        
 
         <div
-          className="absolute -top-[0.4rem] left-4 rotate-180 transition-all ease-in "
+          className="absolute top-[0.2rem] left-4 rotate-0 transition-all ease-in text-lg font-semibold"
           style={{
             // prettier-ignore
             left: `${
@@ -352,7 +335,11 @@ function ColorMeterForAValue({ position = 0 }: { position: number }) {
             }`,
           }}
         >
-          <div className="w-0 h-0 border-l-8 border-r-8 border-b-[16px] border-l-transparent border-r-transparent border-b-black"></div>
+                   <div className='mb-4 pb-4'>{position}%
+                    <div className="w-0 h-0 border-l-8 border-r-8 border-b-[16px] border-l-transparent border-r-transparent border-b-black"></div>
+                   </div>
+
+          
         </div>
       </div>
     </>
