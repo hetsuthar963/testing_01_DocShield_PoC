@@ -4,6 +4,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './componen
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs';
 import { Card, CardDescription } from './components/ui/card';
 import { Input } from './components/ui/input';
+import AnalysisReport from './components/Analysis';
 import { Skeleton } from './components/ui/skeleton';
 import Upload from './components/ui/upload';
 import { useParams } from 'react-router-dom';
@@ -36,7 +37,7 @@ function App() {
   const [loadingFraudData, setLoadingFraudData] = useState<boolean>(true);
   const [position, setPosition] = useState<number>(40); // For color meter demo
   const [extractedData, setExtractedData] = useState<Entity[]>([]); // Initialize with an empty array
-  const [extractedText, setExtractedText] = useState<Entity[]>([]); // Initialize with an empty array
+  const [extractedText, setExtractedText] = useState<string[]>([]); // Initialize with an empty array
 
   const { loading, table } = useTable();
 
@@ -91,6 +92,9 @@ function App() {
     console.log("Updated extractedData in state:", extractedData);
   }, [extractedData]);
   
+  useEffect(() => {
+    console.log("Updated extractedText in state:", extractedText);
+  }, [extractedText]);
 
   useEffect(() => {
     console.log("Updated table state:", table); // Log state changes
@@ -194,72 +198,37 @@ function App() {
                 <TabsContent
                   value="OCR"
                   style={{ height: "calc(100% - 1rem)" }}
-                  className=""
+                  className="h-full overflow-auto px-4 pb-3"
                 >
-                  <div
-                    style={{ height: "calc(100% - 1rem)" }}
-                    className="h-full overflow-auto px-4 pb-3"
-                  >
-                    <Input
-                      placeholder="Search Fault Text..."
-                      className="mb-4"
-                    />
+                  <Input
+                    placeholder="Search Fault Text..."
+                    className="mb-4"
+                  />
 
                   <div className="space-y-4">
-                    {extractedText && extractedText.length > 0 ? (
+                    {extractedText.length > 0 ? (
                       extractedText.map((item, index) => (
-                      <Card key={index} className="p-4">
-                        <CardDescription className="whitespace-pre-line text-center">
-                          {item.text}
-                        </CardDescription>
-                      </Card>
-                      ))
-                    ) : ( 
-                      <p>No data available</p>
-                    )}
-                  </div>
-                    
-                      {loadingFraudData && (
-                        <div className="space-y-2">
-                          {[1, 2, 3].map((i) => (
-                            <Skeleton key={i} className="h-14 w-full" />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-4">
-                  </div>
-                  </TabsContent>
-               
-                  {/* Working */}
-
-                  {/* <div className="space-y-4">
-                    {extractedText && extractedText.length > 0 ? (
-                      extractedText.map((item, index) => (
-                        <Card key={index} className="p-4">
-                          <CardDescription>{item.text}</CardDescription>
+                        <Card key={index} className="p-4 hover:shadow-md transition-shadow">
+                          <CardDescription className="whitespace-pre-line text-center">
+                            {item || "No text available"}
+                          </CardDescription>
                         </Card>
                       ))
-                    ) : ( 
-                      <p>No data available</p>
+                    ) : (
+                      <div className="text-center text-gray-500 py-4">
+                        <p>No data available</p>
+                      </div>
                     )}
                     {loadingInsights && (
                       <div className="space-y-4">
-                        {[1,2,3].map((i) => (
+                        {[1, 2, 3].map((i) => (
                           <Skeleton key={i} className="h-14 w-full" />
                         ))}
                       </div>
                     )}
-                  </div> */}
-                {/* </TabsContent> */}
+                  </div>
+                </TabsContent>
 
-                {/* <TabsContent
-                  value="Extracted"
-                  style={{ height: "calc(100% - 1rem)" }}
-                >
-                  
-                </TabsContent> */}
               </Tabs>
             </div>
           </ResizablePanel>
@@ -273,7 +242,7 @@ function App() {
           
           <div> 
 
-            <div
+            {/* <div
               style={{ height: "calc(100% - 1rem)" }}
               className="flex flex-col p-4 m-4 bg-white overflow-auto"
             >
@@ -308,7 +277,7 @@ function App() {
                 standard features.
               </p> */}
 
-              <h2 className="mt-6 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight">
+              {/* <h2 className="mt-6 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight">
                 Suggestions for Verification:
               </h2>
               <ul className="my-4 ml-6 list-disc [&>li]:mt-2">
@@ -316,14 +285,15 @@ function App() {
                 <li>Check the student ID number with SVIT's records.</li>
                 <li>Confirm the details with the individual named on the document.</li>
               </ul>
-            </div>
-          </div>
+            </div> */} 
 
-          <div>
-            <h1 className="mt-10 scroll-m-20 border-t pt-4 pb-4 text-3xl font-semibold tracking-tight flex flex-row justify-evenly">
-              Forgery-Meter Score
-              
-              <div>
+
+            
+
+
+                {/* <AnalysisReport/> */}
+
+                {/* <div>
                 
                 <span className="text-xl flex gap-4">
                   Tweek to see changes :-
@@ -333,16 +303,23 @@ function App() {
                     className="w-fit"
                   />
                 </span>
-              </div>
+              </div> */}
+
+                
+          </div> 
+
+          <div>
+            <h1 className="mt-10 scroll-m-20 border-t pt-4 pb-4 text-3xl font-semibold tracking-tight flex flex-row justify-evenly">
+              {/* Forgery-Meter Score */}
+              
+             
             </h1>
-            <div className="flex justify-center mt-4 p-4 gap-4">
-              <ColorMeterForAValue position={position} />
-            </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-10">
+            
+            {/* <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-10">
               <p className="text-yellow-800">
                 <strong>Forgery Likelihood: {position/100} (Moderate)</strong> - The document seems authentic but raises some suspicion due to OCR issues and missing standard features.
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </ResizablePanel>
@@ -351,38 +328,3 @@ function App() {
 }
 
 export default App;
-
-function ColorMeterForAValue({ position = 0 }: { position: number }) {
-  const safePosition = Math.min(position, 100);
-  return (
-    <>
-      <div className="relative w-80 ">
-        <div className="flex rounded-full overflow-hidden w-full h-8 text-center">
-          <div className="bg-green-500 w-1/5"></div>
-          <div className="bg-yellow-300 w-1/5"></div>
-          <div className="bg-amber-400 w-1/5"></div>
-          <div className="bg-orange-400 w-1/5"></div>
-          <div className="bg-red-500 w-1/5"></div>
-        </div>
-        
-
-        <div
-          className="absolute top-[0.2rem] left-4 rotate-0 transition-all ease-in text-lg font-semibold"
-          style={{
-            // prettier-ignore
-            left: `${
-              (safePosition !== 0 && safePosition !== 100 && `calc(${safePosition}% - 3%)`) ||
-              (safePosition === 0 && `calc(${safePosition}%)`) ||
-              (safePosition === 100 && `calc(${safePosition}% - 6%)`)
-            }`,
-          }}
-        >
-        <div className='mb-4 pb-4'>{position}%
-          <div className="w-0 h-0 border-l-8 border-r-8 border-b-[16px] border-l-transparent border-r-transparent border-b-black"></div>
-        </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
