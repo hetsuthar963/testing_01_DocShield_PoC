@@ -4,7 +4,7 @@
 // import { promises as fs } from 'fs';
 
 // const openai = new OpenAI({
-//   apiKey: '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',
+//   apiKey: '',
 //   baseURL: 'https://integrate.api.nvidia.com/v1',
 // });
 
